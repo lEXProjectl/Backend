@@ -1,2 +1,2 @@
 # Spring Boot 4.0.2
-# Java 17
+# Java 21
