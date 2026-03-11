@@ -21,6 +21,8 @@ public class User {
 
     private String name;
 
+    private String surname;
+
     @Column(unique = true, nullable = false)
     private String phone;
 
