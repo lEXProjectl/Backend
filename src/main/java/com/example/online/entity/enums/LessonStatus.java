@@ -2,7 +2,8 @@ package com.example.online.entity.enums;
 
 public enum LessonStatus {
     PLANNED,
-    ACTIVE,
-    FINISHED,
+    COMPLETED,
+    TEACHER_ABSENT,
+    STUDENT_ABSENT,
     CANCELLED
 }
