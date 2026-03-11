@@ -1,65 +1,69 @@
 package com.example.online.controller;
 
-import com.example.online.dto.user.UserResponse;
-import com.example.online.entity.User;
-import com.example.online.repository.UserRepository;
+import com.example.online.dto.auth.user.ChangeUserRoleRequest;
+import com.example.online.dto.auth.user.RegisterUserRequest;
+import com.example.online.dto.auth.user.UpdateUserProfileRequest;
+import com.example.online.dto.auth.user.UserResponse;
+import com.example.online.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    private UserResponse toDto(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .phone(user.getPhone())
-                .role(user.getRole() != null ? user.getRole().name() : null)
-                .avatar(user.getAvatar())
-                .rating(user.getRating())
-                .createdAt(user.getCreatedAt())
-                .build();
+    @PostMapping("/register")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterUserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(request));
     }
 
-    /**
-     * Текущий авторизованный пользователь
-     */
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserDetails principal) {
         if (principal == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        User user = userRepository.findByPhone(principal.getUsername())
-                .orElseThrow(() -> new IllegalStateException("Пользователь не найден"));
-
-        return ResponseEntity.ok(toDto(user));
+        return ResponseEntity.ok(userService.getByPhone(principal.getUsername()));
     }
 
-    /**
-     * Все пользователи (только для ADMIN)
-     */
-    @GetMapping
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateMe(
+            @AuthenticationPrincipal UserDetails principal,
+            @RequestBody UpdateUserProfileRequest request
+    ) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(userService.updateProfile(principal.getUsername(), request));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal UserDetails principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        userService.deleteAccount(principal.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/role")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        List<UserResponse> users = userRepository.findAll()
-                .stream()
-                .map(this::toDto)
-                .toList();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<UserResponse> changeUserRole(
+            @PathVariable Long id,
+            @Valid @RequestBody ChangeUserRoleRequest request
+    ) {
+        return ResponseEntity.ok(userService.changeRole(id, request.getRole()));
     }
 }
-
-
