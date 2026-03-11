@@ -1,5 +1,6 @@
 # Spring Boot 4.0.2
 # Java 21
+# http://localhost:8080/swagger-ui.html
 ## Auth по телефону + SMS
 
 Публичные endpoints (не требуют JWT):
