@@ -80,7 +80,19 @@ Headers:
 Allowed: `STUDENT`, `TEACHER`.
 
 ## 3) Lesson Service
+Для админа нужно передавать teacherId.
+Для учителя teacherId можно не передавать — он автоматически ставится сам.
+Пример запроса для админа:
 
+{
+  "title": "Math",
+  "subject": "Algebra",
+  "teacherId": 5,
+  "startTime": "2026-03-11T14:00:00",
+  "endTime": "2026-03-11T15:00:00",
+  "studentId": 2,
+  "type": "INDIVIDUAL"
+}
 ### POST `/api/lessons` (TEACHER/ADMIN)
 Headers:
 - `Authorization: Bearer {{teacherToken}}`
